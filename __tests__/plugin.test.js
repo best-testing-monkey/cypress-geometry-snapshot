@@ -7,8 +7,8 @@
 
 import { diffImageToSnapshot } from 'jest-image-snapshot/src/diff-snapshot';
 import {
-  matchImageSnapshotOptions,
-  matchImageSnapshotPlugin,
+  MatchGeometrySnapshotOptions,
+  MatchGeometrySnapshotPlugin,
 } from '../src/plugin';
 
 jest.mock('jest-image-snapshot/src/diff-snapshot', () => ({
@@ -33,9 +33,9 @@ describe('plugin', () => {
       updateSnapshots: true,
     };
 
-    matchImageSnapshotOptions()(options);
+    MatchGeometrySnapshotOptions()(options);
 
-    const result = matchImageSnapshotPlugin({
+    const result = MatchGeometrySnapshotPlugin({
       path: '/cypress/screenshots/path/to/cheese',
     });
     expect(result).toEqual({

@@ -18,7 +18,7 @@ function reporter(runner) {
       cache.forEach(({ diffRatio, diffPixelCount, diffOutputPath }) => {
         console.log(
           `\n  - ${diffOutputPath}\n    Screenshot was ${diffRatio *
-            100}% different from saved snapshot with ${diffPixelCount} different pixels.\n`
+            100}% not the same as saved snapshot with ${diffPixelCount} different pixels.\n`
         );
         termImage(diffOutputPath, { fallback });
       });

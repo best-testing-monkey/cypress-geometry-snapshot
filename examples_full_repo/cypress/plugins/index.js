@@ -1,7 +1,7 @@
 const {
-  addMatchImageSnapshotPlugin,
+  addMatchGeometrySnapshotPlugin,
 } = require('cypress-geometry-snapshot/plugin');
 
 module.exports = (on, config) => {
-  addMatchImageSnapshotPlugin(on, config);
+  addMatchGeometrySnapshotPlugin(on, config);
 };

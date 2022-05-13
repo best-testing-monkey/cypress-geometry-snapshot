@@ -12,8 +12,8 @@ const updateSnapshots = Cypress.env('updateSnapshots') || false;
 const failOnSnapshotDiff =
   typeof Cypress.env('failOnSnapshotDiff') === 'undefined';
 
-export function matchImageSnapshotCommand(defaultOptions) {
-  return function matchImageSnapshot(subject, maybeName, commandOptions) {
+export function MatchGeometrySnapshotCommand(defaultOptions) {
+  return function MatchGeometrySnapshot(subject, maybeName, commandOptions) {
     const options = {
       ...defaultOptions,
       ...((typeof maybeName === 'string' ? commandOptions : maybeName) || {}),
@@ -46,13 +46,13 @@ export function matchImageSnapshotCommand(defaultOptions) {
             const message = diffSize
               ? `Image size (${imageDimensions.baselineWidth}x${
                   imageDimensions.baselineHeight
-                }) different than saved snapshot size (${
+                }) not the same as saved snapshot size (${
                   imageDimensions.receivedWidth
                 }x${
                   imageDimensions.receivedHeight
                 }).\nSee diff for details: ${diffOutputPath}`
               : `Image was ${diffRatio *
-                  100}% different from saved snapshot with ${diffPixelCount} different pixels.\nSee diff for details: ${diffOutputPath}`;
+                  100}% not the same as saved snapshot with ${diffPixelCount} different pixels.\nSee diff for details: ${diffOutputPath}`;
 
             if (failOnSnapshotDiff) {
               throw new Error(message);
@@ -65,17 +65,18 @@ export function matchImageSnapshotCommand(defaultOptions) {
   };
 }
 
-export function addMatchImageSnapshotCommand(
-  maybeName = 'matchImageSnapshot',
+export function addMatchGeometrySnapshotCommand(
+  maybeName = 'MatchGeometrySnapshot',
   maybeOptions
 ) {
   const options = typeof maybeName === 'string' ? maybeOptions : maybeName;
-  const name = typeof maybeName === 'string' ? maybeName : 'matchImageSnapshot';
+  const name =
+    typeof maybeName === 'string' ? maybeName : 'MatchGeometrySnapshot';
   Cypress.Commands.add(
     name,
     {
       prevSubject: ['optional', 'element', 'window', 'document'],
     },
-    matchImageSnapshotCommand(options)
+    MatchGeometrySnapshotCommand(options)
   );
 }

@@ -1,3 +1,3 @@
-import { addMatchImageSnapshotCommand } from 'cypress-geometry-snapshot/command';
+import { addMatchGeometrySnapshotCommand } from 'cypress-geometry-snapshot/command';
 
-addMatchImageSnapshotCommand();
+addMatchGeometrySnapshotCommand();

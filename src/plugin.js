@@ -24,7 +24,7 @@ export const cachePath = path.join(
   '.snapshot-report'
 );
 
-export function matchImageSnapshotOptions() {
+export function MatchGeometrySnapshotOptions() {
   return (options = {}) => {
     snapshotOptions = options;
     snapshotRunning = true;
@@ -32,7 +32,7 @@ export function matchImageSnapshotOptions() {
   };
 }
 
-export function matchImageSnapshotResult() {
+export function MatchGeometrySnapshotResult() {
   return () => {
     snapshotRunning = false;
 
@@ -49,7 +49,7 @@ export function matchImageSnapshotResult() {
   };
 }
 
-export function matchImageSnapshotPlugin({ path: screenshotPath }) {
+export function MatchGeometrySnapshotPlugin({ path: screenshotPath }) {
   if (!snapshotRunning) {
     return null;
   }
@@ -69,9 +69,7 @@ export function matchImageSnapshotPlugin({ path: screenshotPath }) {
   const receivedImageBuffer = fs.readFileSync(screenshotPath);
   fs.removeSync(screenshotPath);
 
-  const { dir: screenshotDir, name } = path.parse(
-    screenshotPath
-  );
+  const { dir: screenshotDir, name } = path.parse(screenshotPath);
 
   // remove the cypress v5+ native retries suffix from the file name
   const snapshotIdentifier = name.replace(/ \(attempt [0-9]+\)/, '');
@@ -132,10 +130,10 @@ export function matchImageSnapshotPlugin({ path: screenshotPath }) {
   };
 }
 
-export function addMatchImageSnapshotPlugin(on, config) {
+export function addMatchGeometrySnapshotPlugin(on, config) {
   on('task', {
-    [MATCH]: matchImageSnapshotOptions(config),
-    [RECORD]: matchImageSnapshotResult(config),
+    [MATCH]: MatchGeometrySnapshotOptions(config),
+    [RECORD]: MatchGeometrySnapshotResult(config),
   });
-  on('after:screenshot', matchImageSnapshotPlugin);
+  on('after:screenshot', MatchGeometrySnapshotPlugin);
 }

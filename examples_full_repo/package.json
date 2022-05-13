@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "concurrently": "^3.6.0",
+    "cypress-geometry-snapshot": "file:..",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "react-scripts": "1.1.4"
@@ -15,8 +16,16 @@
     "eject": "react-scripts eject",
     "cypress:run": "cypress run",
     "cypress:open": "cypress open",
-    "examples": "concurrently \"npm run start\" \"npm run cypress:run -- --reporter cypress-geometry-snapshot/reporter\""
+    "examples": "concurrently \"npm run start\" \"npm run cypress:run -- --reporter cypress-geometry-snapshot/reporter\"",
+    "start:ci": "serve --no-clipboard --listen ${PORT:-8080}",
+    "cypress:open:localhost": "ENV=localhost npm run cypress:0open",
+    "cypress:open:dev": "ENV=dev npm run cypress:open",
+    "cypress:open:qa": "ENV=qa npm run cypress:open",
+    "cypress:open:staging": "ENV=staging npm run cypress:open",
+    "cypress:open:production": "ENV=production npm run cypress:open"
   },
   "devDependencies": {
+    "@types/node": "^17.0.33",
+    "cypress": "*"
   }
 }

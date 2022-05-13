@@ -19,8 +19,8 @@ global.cy = {
 };
 
 const {
-  matchImageSnapshotCommand,
-  addMatchImageSnapshotCommand,
+  MatchGeometrySnapshotCommand,
+  addMatchGeometrySnapshotCommand,
 } = require('../src/command');
 
 const defaultOptions = {
@@ -28,7 +28,9 @@ const defaultOptions = {
   failureThresholdType: 'pixel',
 };
 
-const boundMatchImageSnapshot = matchImageSnapshotCommand(defaultOptions).bind({
+const boundMatchGeometrySnapshot = MatchGeometrySnapshotCommand(
+  defaultOptions
+).bind({
   test: 'snap',
 });
 const subject = { screenshot: jest.fn() };
@@ -40,7 +42,7 @@ describe('command', () => {
   it('should pass options through', () => {
     global.cy.task = jest.fn().mockResolvedValue({ pass: true });
 
-    boundMatchImageSnapshot(subject, commandOptions);
+    boundMatchGeometrySnapshot(subject, commandOptions);
 
     expect(cy.task).toHaveBeenCalledWith('Matching image snapshot', {
       screenshotsFolder: '/cypress/screenshots',
@@ -56,7 +58,7 @@ describe('command', () => {
     global.cy.task = jest.fn().mockResolvedValue({ pass: true });
 
     expect(
-      boundMatchImageSnapshot(subject, commandOptions)
+      boundMatchGeometrySnapshot(subject, commandOptions)
     ).resolves.not.toThrow();
   });
 
@@ -71,15 +73,15 @@ describe('command', () => {
     });
 
     expect(
-      boundMatchImageSnapshot(subject, commandOptions)
+      boundMatchGeometrySnapshot(subject, commandOptions)
     ).rejects.toThrowErrorMatchingSnapshot();
   });
 
   it('should add command', () => {
     Cypress.Commands.add.mockReset();
-    addMatchImageSnapshotCommand();
+    addMatchGeometrySnapshotCommand();
     expect(Cypress.Commands.add).toHaveBeenCalledWith(
-      'matchImageSnapshot',
+      'MatchGeometrySnapshot',
       { prevSubject: ['optional', 'element', 'window', 'document'] },
       expect.any(Function)
     );
@@ -87,7 +89,7 @@ describe('command', () => {
 
   it('should add command with custom name', () => {
     Cypress.Commands.add.mockReset();
-    addMatchImageSnapshotCommand('sayCheese');
+    addMatchGeometrySnapshotCommand('sayCheese');
     expect(Cypress.Commands.add).toHaveBeenCalledWith(
       'sayCheese',
       { prevSubject: ['optional', 'element', 'window', 'document'] },
@@ -97,9 +99,9 @@ describe('command', () => {
 
   it('should add command with options', () => {
     Cypress.Commands.add.mockReset();
-    addMatchImageSnapshotCommand({ failureThreshold: 0.1 });
+    addMatchGeometrySnapshotCommand({ failureThreshold: 0.1 });
     expect(Cypress.Commands.add).toHaveBeenCalledWith(
-      'matchImageSnapshot',
+      'MatchGeometrySnapshot',
       { prevSubject: ['optional', 'element', 'window', 'document'] },
       expect.any(Function)
     );
