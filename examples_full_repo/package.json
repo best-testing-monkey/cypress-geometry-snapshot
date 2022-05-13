@@ -15,7 +15,7 @@
     "eject": "react-scripts eject",
     "cypress:run": "cypress run",
     "cypress:open": "cypress open",
-    "examples": "concurrently \"npm run start\" \"npm run cypress:run -- --reporter cypress-image-snapshot/reporter\""
+    "examples": "concurrently \"npm run start\" \"npm run cypress:run -- --reporter cypress-geometry-snapshot/reporter\""
   },
   "devDependencies": {
   }

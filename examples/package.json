@@ -15,9 +15,17 @@
     "eject": "react-scripts eject",
     "cypress:run": "cypress run",
     "cypress:open": "cypress open",
-    "examples": "concurrently \"npm run start\" \"npm run cypress:run -- --reporter cypress-image-snapshot/reporter\""
+    "examples": "concurrently \"npm run start\" \"npm run cypress:run -- --reporter cypress-geometry-snapshot/reporter\"",
+    "start:ci": "serve --no-clipboard --listen ${PORT:-8080}",
+    "cypress:open:localhost": "ENV=localhost npm run cypress:open",
+    "cypress:open:dev": "ENV=dev npm run cypress:open",
+    "cypress:open:qa": "ENV=qa npm run cypress:open",
+    "cypress:open:staging": "ENV=staging npm run cypress:open",
+    "cypress:open:production": "ENV=production npm run cypress:open",
+    "cypress:open": "cypress open"
   },
   "devDependencies": {
-    "cypress": "^9.6.1"
+    "cypress": "*",
+    "cypress-geometry-snapshot": "github:best-testing-monkey/cypress-geometry-snapshot"
   }
 }

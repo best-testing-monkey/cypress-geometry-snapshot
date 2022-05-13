@@ -7,7 +7,7 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: github.repository == 'jaredpalmer/cypress-image-snapshot'
+    if: github.repository == 'best-testing-monkey/cypress-geometry-snapshot'
     steps:
       - uses: actions/checkout@v2
         with:
