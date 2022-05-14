@@ -1,2 +1,7 @@
-export const MATCH = 'Matching image snapshot';
-export const RECORD = 'Recording snapshot result';
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true,
+});
+const MATCH = (exports.MATCH = 'Matching image snapshot');
+const RECORD = (exports.RECORD = 'Recording snapshot result');

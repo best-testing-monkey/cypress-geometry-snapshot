@@ -1,15 +1,64 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true,
+});
+exports.cachePath = undefined;
+
+var _extends =
+  Object.assign ||
+  function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+
+exports.MatchGeometrySnapshotOptions = MatchGeometrySnapshotOptions;
+exports.MatchGeometrySnapshotResult = MatchGeometrySnapshotResult;
+exports.MatchGeometrySnapshotPlugin = MatchGeometrySnapshotPlugin;
+exports.addMatchGeometrySnapshotPlugin = addMatchGeometrySnapshotPlugin;
+
+var _fsExtra = require('fs-extra');
+
+var _fsExtra2 = _interopRequireDefault(_fsExtra);
+
+var _diffSnapshot = require('jest-image-snapshot/src/diff-snapshot');
+
+var _path = require('path');
+
+var _path2 = _interopRequireDefault(_path);
+
+var _pkgDir = require('pkg-dir');
+
+var _pkgDir2 = _interopRequireDefault(_pkgDir);
+
+var _constants = require('./constants');
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : { default: obj };
+}
+
+function _objectWithoutProperties(obj, keys) {
+  var target = {};
+  for (var i in obj) {
+    if (keys.indexOf(i) >= 0) continue;
+    if (!Object.prototype.hasOwnProperty.call(obj, i)) continue;
+    target[i] = obj[i];
+  }
+  return target;
+}
 /**
  * Copyright (c) 2018-present The Palmer Group
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-
-import fs from 'fs-extra';
-import { diffImageToSnapshot } from 'jest-image-snapshot/src/diff-snapshot';
-import path from 'path';
-import pkgDir from 'pkg-dir';
-import { MATCH, RECORD } from './constants';
 
 let snapshotOptions = {};
 let snapshotResult = {};
@@ -18,13 +67,13 @@ const kebabSnap = '-snap.png';
 const dotSnap = '.snap.png';
 const dotDiff = '.diff.png';
 
-export const cachePath = path.join(
-  pkgDir.sync(process.cwd()),
+const cachePath = (exports.cachePath = _path2.default.join(
+  _pkgDir2.default.sync(process.cwd()),
   'cypress',
   '.snapshot-report'
-);
+));
 
-export function MatchGeometrySnapshotOptions() {
+function MatchGeometrySnapshotOptions() {
   return (options = {}) => {
     snapshotOptions = options;
     snapshotRunning = true;
@@ -32,88 +81,110 @@ export function MatchGeometrySnapshotOptions() {
   };
 }
 
-export function MatchGeometrySnapshotResult() {
+function MatchGeometrySnapshotResult() {
   return () => {
     snapshotRunning = false;
 
     const { pass, added, updated } = snapshotResult;
 
     // @todo is there a less expensive way to share state between test and reporter?
-    if (!pass && !added && !updated && fs.existsSync(cachePath)) {
-      const cache = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+    if (
+      !pass &&
+      !added &&
+      !updated &&
+      _fsExtra2.default.existsSync(cachePath)
+    ) {
+      const cache = JSON.parse(
+        _fsExtra2.default.readFileSync(cachePath, 'utf8')
+      );
       cache.push(snapshotResult);
-      fs.writeFileSync(cachePath, JSON.stringify(cache), 'utf8');
+      _fsExtra2.default.writeFileSync(cachePath, JSON.stringify(cache), 'utf8');
     }
 
     return snapshotResult;
   };
 }
 
-export function MatchGeometrySnapshotPlugin({ path: screenshotPath }) {
+function MatchGeometrySnapshotPlugin({ path: screenshotPath }) {
   if (!snapshotRunning) {
     return null;
   }
 
   const {
-    screenshotsFolder,
-    updateSnapshots,
-    options: {
-      failureThreshold = 0,
-      failureThresholdType = 'pixel',
-      customSnapshotsDir,
-      customDiffDir,
-      ...options
-    } = {},
-  } = snapshotOptions;
+      screenshotsFolder,
+      updateSnapshots,
+      options: {
+        failureThreshold = 0,
+        failureThresholdType = 'pixel',
+        customSnapshotsDir,
+        customDiffDir,
+      } = {},
+    } = snapshotOptions,
+    options = _objectWithoutProperties(snapshotOptions.options, [
+      'failureThreshold',
+      'failureThresholdType',
+      'customSnapshotsDir',
+      'customDiffDir',
+    ]);
 
-  const receivedImageBuffer = fs.readFileSync(screenshotPath);
-  fs.removeSync(screenshotPath);
+  const receivedImageBuffer = _fsExtra2.default.readFileSync(screenshotPath);
+  _fsExtra2.default.removeSync(screenshotPath);
 
-  const { dir: screenshotDir, name } = path.parse(screenshotPath);
+  const { dir: screenshotDir, name } = _path2.default.parse(screenshotPath);
 
   // remove the cypress v5+ native retries suffix from the file name
   const snapshotIdentifier = name.replace(/ \(attempt [0-9]+\)/, '');
 
-  const relativePath = path.relative(screenshotsFolder, screenshotDir);
+  const relativePath = _path2.default.relative(
+    screenshotsFolder,
+    screenshotDir
+  );
   const snapshotsDir = customSnapshotsDir
-    ? path.join(process.cwd(), customSnapshotsDir, relativePath)
-    : path.join(screenshotsFolder, '..', 'snapshots', relativePath);
+    ? _path2.default.join(process.cwd(), customSnapshotsDir, relativePath)
+    : _path2.default.join(screenshotsFolder, '..', 'snapshots', relativePath);
 
-  const snapshotKebabPath = path.join(
+  const snapshotKebabPath = _path2.default.join(
     snapshotsDir,
     `${snapshotIdentifier}${kebabSnap}`
   );
-  const snapshotDotPath = path.join(
+  const snapshotDotPath = _path2.default.join(
     snapshotsDir,
     `${snapshotIdentifier}${dotSnap}`
   );
 
   const diffDir = customDiffDir
-    ? path.join(process.cwd(), customDiffDir, relativePath)
-    : path.join(snapshotsDir, '__diff_output__');
-  const diffDotPath = path.join(diffDir, `${snapshotIdentifier}${dotDiff}`);
+    ? _path2.default.join(process.cwd(), customDiffDir, relativePath)
+    : _path2.default.join(snapshotsDir, '__diff_output__');
+  const diffDotPath = _path2.default.join(
+    diffDir,
+    `${snapshotIdentifier}${dotDiff}`
+  );
 
-  if (fs.pathExistsSync(snapshotDotPath)) {
-    fs.copySync(snapshotDotPath, snapshotKebabPath);
+  if (_fsExtra2.default.pathExistsSync(snapshotDotPath)) {
+    _fsExtra2.default.copySync(snapshotDotPath, snapshotKebabPath);
   }
 
-  snapshotResult = diffImageToSnapshot({
-    snapshotsDir,
-    diffDir,
-    receivedImageBuffer,
-    snapshotIdentifier,
-    failureThreshold,
-    failureThresholdType,
-    updateSnapshot: updateSnapshots,
-    ...options,
-  });
+  snapshotResult = (0, _diffSnapshot.diffImageToSnapshot)(
+    _extends(
+      {
+        snapshotsDir,
+        diffDir,
+        receivedImageBuffer,
+        snapshotIdentifier,
+        failureThreshold,
+        failureThresholdType,
+        updateSnapshot: updateSnapshots,
+      },
+      options
+    )
+  );
 
   const { pass, added, updated, diffOutputPath } = snapshotResult;
 
   if (!pass && !added && !updated) {
-    fs.copySync(diffOutputPath, diffDotPath);
-    fs.removeSync(diffOutputPath);
-    fs.removeSync(snapshotKebabPath);
+    _fsExtra2.default.copySync(diffOutputPath, diffDotPath);
+    _fsExtra2.default.removeSync(diffOutputPath);
+    _fsExtra2.default.removeSync(snapshotKebabPath);
     snapshotResult.diffOutputPath = diffDotPath;
 
     return {
@@ -121,8 +192,8 @@ export function MatchGeometrySnapshotPlugin({ path: screenshotPath }) {
     };
   }
 
-  fs.copySync(snapshotKebabPath, snapshotDotPath);
-  fs.removeSync(snapshotKebabPath);
+  _fsExtra2.default.copySync(snapshotKebabPath, snapshotDotPath);
+  _fsExtra2.default.removeSync(snapshotKebabPath);
   snapshotResult.diffOutputPath = snapshotDotPath;
 
   return {
@@ -130,10 +201,10 @@ export function MatchGeometrySnapshotPlugin({ path: screenshotPath }) {
   };
 }
 
-export function addMatchGeometrySnapshotPlugin(on, config) {
+function addMatchGeometrySnapshotPlugin(on, config) {
   on('task', {
-    [MATCH]: MatchGeometrySnapshotOptions(config),
-    [RECORD]: MatchGeometrySnapshotResult(config),
+    [_constants.MATCH]: MatchGeometrySnapshotOptions(config),
+    [_constants.RECORD]: MatchGeometrySnapshotResult(config),
   });
   on('after:screenshot', MatchGeometrySnapshotPlugin);
 }
