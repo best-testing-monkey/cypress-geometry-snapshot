@@ -39,6 +39,7 @@ var _pkgDir = require('pkg-dir');
 var _pkgDir2 = _interopRequireDefault(_pkgDir);
 
 var _constants = require('./constants');
+const fs = require('fs-extra');
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : { default: obj };
@@ -207,4 +208,11 @@ function addMatchGeometrySnapshotPlugin(on, config) {
     [_constants.RECORD]: MatchGeometrySnapshotResult(config),
   });
   on('after:screenshot', MatchGeometrySnapshotPlugin);
+
+  on('task', {
+    // deconstruct the individual properties
+    fileExists({ path }) {
+      return _fsExtra2.default.existsSync(path);
+    },
+  });
 }
