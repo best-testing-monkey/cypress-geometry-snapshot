@@ -132,13 +132,12 @@ function diffKeys(oldKeys, newKeys, ignoredXpaths) {
     common: oldKeys.filter(x => newKeys.includes(x)),
     removed: oldKeys.filter(x => !newKeys.includes(x)),
     added: newKeys.filter(x => !oldKeys.includes(x)),
-    ignored: [],
   };
   for (let key of Object.keys(retvals)) {
-    retvals['ignored'] = retvals['ignored'].concat(
-      filterInRegex(retvals[key], ignoredXpaths)
-    );
+    let ignored = filterInRegex(retvals[key], ignoredXpaths);
     retvals[key] = filterOutRegex(retvals[key], ignoredXpaths);
+    console.log('Ignored @' + key);
+    console.log(JSON.stringify(ignored, null, 2));
   }
   return retvals;
 }
@@ -194,7 +193,16 @@ function checkForMissingElements(keysDiff) {
   return failLines;
 }
 
-function checkBounds(keysDiff, geoMapExisting, geoMap, shouldFail) {
+function checkBounds(
+  keysDiff,
+  geoMapExisting,
+  geoMap,
+  shouldFail,
+  maxPixelDiff
+) {
+  if (typeof maxPixelDiff === 'undefined') {
+    maxPixelDiff = 0;
+  }
   let failLines = '';
 
   for (const key of keysDiff.common) {
@@ -203,7 +211,9 @@ function checkBounds(keysDiff, geoMapExisting, geoMap, shouldFail) {
     let boundsDiffer = false;
     let differkeys = '';
     for (const boundsKey of Object.keys(oldBounds)) {
-      if (oldBounds[boundsKey] !== newBounds[boundsKey]) {
+      if (
+        Math.abs(oldBounds[boundsKey] - newBounds[boundsKey]) > maxPixelDiff
+      ) {
         boundsDiffer = true;
         shouldFail = true;
         differkeys += ' ' + boundsKey;
@@ -225,7 +235,12 @@ function checkBounds(keysDiff, geoMapExisting, geoMap, shouldFail) {
   return failLines;
 }
 
-function compareSavedAndCurrentBounds(geoMapExisting, geoMap, ignoredXpaths) {
+function compareSavedAndCurrentBounds(
+  geoMapExisting,
+  geoMap,
+  ignoredXpaths,
+  maxPixelDiff
+) {
   let shouldFail = false;
   let failLines = '';
   const keysDiff = diffKeys(
@@ -242,10 +257,11 @@ function compareSavedAndCurrentBounds(geoMapExisting, geoMap, ignoredXpaths) {
   //todo: mark locations of missing elements
 
   // Bounds
-  failLines += checkBounds(keysDiff, geoMapExisting, geoMap);
+  failLines += checkBounds(keysDiff, geoMapExisting, geoMap, maxPixelDiff);
   //todo: mark moved elements
   //todo: mark locations of old location
 
+  //todo: make a difference report in JSON
   return failLines;
 }
 
@@ -261,19 +277,22 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
       ignoredXpaths = [];
     }
 
-    //todo: add option ignore (regex of xpath to ignore)
-    //todo: add option maxdiff (max difference in px)
+    let maxPixelDiff = options['maxdiff'];
+    if (typeof maxPixelDiff === 'undefined') {
+      maxPixelDiff = 0;
+    }
+
     //todo: add option diffStyle (record and diff the calculated styles as well)
     //todo: add option diffHoverStyle (record and diff the calculated styles as well)
 
-    const name = typeof maybeName === 'string' ? maybeName : undefined;
-    //todo: if name is 'undefined' then use the current test title
+    const name =
+      typeof maybeName === 'string' ? maybeName : Cypress.currentTest.title;
 
     const target = subject ? cy.wrap(subject) : cy;
     cy.log(`Name is '${name}'`);
     // target.screenshot(name, options);
     cy.log('Get the bounds of all visible elements');
-    cy.get(':visible').each((visibleElement, elementIndex, allElements) => {
+    target.get(':visible').each((visibleElement, elementIndex, allElements) => {
       // Wait untill the last for efficiency
       if (elementIndex == allElements.length - 1) {
         const allBounds = {};
@@ -291,8 +310,7 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
       const shotFN = `${screenshotsFolder}/${name}.json`;
       saveAsJson(shotFN, geoMap);
 
-      const snapFN = `${snapshotsDir}/${name}.json`;
-      //todo: use the current spec file-name as subfolder in ${snapshotsDir}
+      const snapFN = `${snapshotsDir}/${Cypress.spec.name}/${name}.json`;
 
       cy.log(`Looking for ${snapFN}`);
       cy.task('fileExists', { path: snapFN }).then(itExists => {
@@ -303,7 +321,8 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
             const shouldFail = compareSavedAndCurrentBounds(
               geoMapExisting,
               geoMap,
-              ignoredXpaths
+              ignoredXpaths,
+              maxPixelDiff
             );
             if (shouldFail) {
               throw 'Differences were found\n' + shouldFail;

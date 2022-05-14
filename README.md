@@ -84,6 +84,9 @@ describe('Login', () => {
 
     // options object passed in
     cy.MatchGeometrySnapshot(options);
+
+    // match element snapshot
+    cy.get('#login').MatchGeometrySnapshot();
   });
 });
 ```
@@ -144,6 +147,7 @@ or add the following to your `cypress.json`
 ## Options
 
 - `ignore` : array of strings or regex expressions. All found visible elements matching the regex will be ignored
+- `maxdiff` : integer of the maximum number of pixels element bounds can differ compared to the snapshot
 
 For example, the default options we use in `<rootDir>/cypress/support/commands.js` are:
 
