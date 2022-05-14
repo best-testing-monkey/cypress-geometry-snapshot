@@ -153,6 +153,7 @@ For example, the default options we use in `<rootDir>/cypress/support/commands.j
 
 ```js
 addMatchGeometrySnapshotCommand({
-  ignore: ['/.*ignoredXpath.*/g'], // threshold for entire image
+  ignore: ['/.*ignoredXpath.*/g'], // will ignore all xpath with the text 'ignoredXpath'
+  maxdiff: 5, // bounds and locations MUST be within 5 px (positive or negative)
 });
 ```

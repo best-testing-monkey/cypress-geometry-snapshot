@@ -35,8 +35,10 @@ const fs = require('fs-extra');
 
 const screenshotsFolder = Cypress.config('screenshotsFolder');
 const updateSnapshots = Cypress.env('updateSnapshots') || false;
+//todo: implement updateSnapshots
 const failOnSnapshotDiff =
   typeof Cypress.env('failOnSnapshotDiff') === 'undefined';
+//todo: implement failOnSnapshotDiff
 const snapshotsDir = `${screenshotsFolder}/../snapshots`;
 
 function getXPath(node) {
