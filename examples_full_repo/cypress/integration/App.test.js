@@ -9,6 +9,6 @@ describe('App', () => {
     cy.visit('http://demoqa.com');
 
     cy.viewport(375, 812);
-    cy.MatchGeometrySnapshot('mobile/app', { ignore: '' });
+    cy.MatchGeometrySnapshot('mobile/app', { ignore: ['.*fixedban.*'] });
   });
 });

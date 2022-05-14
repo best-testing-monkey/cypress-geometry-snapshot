@@ -1,18 +1,18 @@
 'use strict';
 
-var _fsExtra = require('fs-extra');
+const _fsExtra = require('fs-extra');
 
-var _fsExtra2 = _interopRequireDefault(_fsExtra);
+const _fsExtra2 = _interopRequireDefault(_fsExtra);
 
-var _termImg = require('term-img');
+const _termImg = require('term-img');
 
-var _termImg2 = _interopRequireDefault(_termImg);
+const _termImg2 = _interopRequireDefault(_termImg);
 
-var _chalk = require('chalk');
+const _chalk = require('chalk');
 
-var _chalk2 = _interopRequireDefault(_chalk);
+const _chalk2 = _interopRequireDefault(_chalk);
 
-var _plugin = require('./plugin');
+const _plugin = require('./plugin');
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : { default: obj };

@@ -85,16 +85,66 @@ function saveAsJson(shotFN, geoMap) {
   cy.writeFile(shotFN, JSON.stringify(geoMap, null, 2));
 }
 
-function diffKeys(oldKeys, newKeys) {
-  return {
+function filterOutRegex(subjectArray, regexList) {
+  console.log('filterOutRegex:');
+  if (regexList.length === 0) {
+    return subjectArray;
+  }
+
+  let retVals = [];
+  for (let x of subjectArray) {
+    for (let rx of regexList) {
+      if (x.match(rx) === null) {
+        retVals.push(x);
+      }
+    }
+  }
+  return retVals;
+
+  //This is neater, but does not seem to work:
+  // return subjectArray.filter(x => {return regexList.some(function(rx) {
+  //     console.log(`"${x}".match("${rx}") === null`)
+  //     return x.match(rx) === null; })})
+}
+function filterInRegex(subjectArray, regexList) {
+  console.log('filterInRegex');
+  if (regexList.length === 0) {
+    return [];
+  }
+  let retVals = [];
+  for (let x of subjectArray) {
+    for (let rx of regexList) {
+      if (x.match(rx) !== null) {
+        retVals.push(x);
+      }
+    }
+  }
+  return retVals;
+
+  //This is neater, but does not seem to work:
+  // return subjectArray.filter(x => {return regexList.some(function(rx) {
+  //     console.log(`"${x}".match("${rx}") !== null`)
+  //     return x.match(rx) !== null; })})
+}
+
+function diffKeys(oldKeys, newKeys, ignoredXpaths) {
+  let retvals = {
     common: oldKeys.filter(x => newKeys.includes(x)),
     removed: oldKeys.filter(x => !newKeys.includes(x)),
     added: newKeys.filter(x => !oldKeys.includes(x)),
+    ignored: [],
   };
+  for (let key of Object.keys(retvals)) {
+    retvals['ignored'] = retvals['ignored'].concat(
+      filterInRegex(retvals[key], ignoredXpaths)
+    );
+    retvals[key] = filterOutRegex(retvals[key], ignoredXpaths);
+  }
+  return retvals;
 }
 
 function removeLastInstance(removeString, subjectStr) {
-  var charpos = subjectStr.lastIndexOf(removeString);
+  const charpos = subjectStr.lastIndexOf(removeString);
   if (charpos < 0) return subjectStr;
   let ptone = subjectStr.substring(0, charpos);
   let pttwo = subjectStr.substring(charpos + removeString.length);
@@ -175,10 +225,14 @@ function checkBounds(keysDiff, geoMapExisting, geoMap, shouldFail) {
   return failLines;
 }
 
-function compareSavedAndCurrentBounds(geoMapExisting, geoMap) {
+function compareSavedAndCurrentBounds(geoMapExisting, geoMap, ignoredXpaths) {
   let shouldFail = false;
   let failLines = '';
-  const keysDiff = diffKeys(Object.keys(geoMapExisting), Object.keys(geoMap));
+  const keysDiff = diffKeys(
+    Object.keys(geoMapExisting),
+    Object.keys(geoMap),
+    ignoredXpaths
+  );
   // new element
   failLines += checkForNewElements(keysDiff);
   //todo: highlight new elements
@@ -202,6 +256,10 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
       defaultOptions,
       (typeof maybeName === 'string' ? commandOptions : maybeName) || {}
     );
+    let ignoredXpaths = options['ignore'];
+    if (typeof ignoredXpaths === 'undefined') {
+      ignoredXpaths = [];
+    }
 
     //todo: add option ignore (regex of xpath to ignore)
     //todo: add option maxdiff (max difference in px)
@@ -244,7 +302,8 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
             cy.log('Compare current and saved bounds');
             const shouldFail = compareSavedAndCurrentBounds(
               geoMapExisting,
-              geoMap
+              geoMap,
+              ignoredXpaths
             );
             if (shouldFail) {
               throw 'Differences were found\n' + shouldFail;

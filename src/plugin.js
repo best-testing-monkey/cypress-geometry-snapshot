@@ -26,9 +26,9 @@ var _extends =
 // exports.MatchGeometrySnapshotPlugin = MatchGeometrySnapshotPlugin;
 exports.addMatchGeometrySnapshotPlugin = addMatchGeometrySnapshotPlugin;
 
-var _fsExtra = require('fs-extra');
+const _fsExtra = require('fs-extra');
 
-var _fsExtra2 = _interopRequireDefault(_fsExtra);
+const _fsExtra2 = _interopRequireDefault(_fsExtra);
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : { default: obj };
