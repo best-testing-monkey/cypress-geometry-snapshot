@@ -6,8 +6,7 @@ The goal of this Cypress plugin is 'visually' testing using the geometry of a we
 * computed style
 * text
 
-Testing by geometry instead of a graphical pixel-by-pixel diff is generally much faster (for larger pages). 
-Crawling a complete website for visible changes now becomes feasable.
+Testing by geometry instead of a graphical pixel-by-pixel diff is generally much faster (for larger pages), pulling crawling complete sites for visible changes within feasability.
 
 <details>
 
