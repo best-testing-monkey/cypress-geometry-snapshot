@@ -95,9 +95,13 @@ describe('Login', () => {
 
 Run Cypress with `--env updateSnapshots=true` in order to update the base image files for all of your tests.
 
+`TODO!! This feature is not implemented yet!`
+
 ### Preventing failures
 
 Run Cypress with `--env failOnSnapshotDiff=false` in order to prevent test failures when an image diff does not pass.
+
+`TODO!! This feature is not implemented yet!`
 
 ### Reporter
 
