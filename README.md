@@ -1,7 +1,15 @@
 # Cypress Geometry Snapshot
 
+The goal of this Cypress plugin is 'visually' testing using the geometry of a web-page, using computed properties of all visible elements:
+
+* Bounding boxes
+* computed style
+* text
+
+Testing by geometry instead of a graphical pixel-by-pixel diff is generally much faster (for larger pages). 
+Crawling a complete website for visible changes now becomes feasable.
+
 <details>
-<summary>See it in action!</summary>
 
 ### Cypress GUI
 
