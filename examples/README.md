@@ -3,8 +3,8 @@
 To view the examples, run the following commands:
 
 ```bash
-git clone https://github.com/palmerhq/cypress-image-snapshot.git
-cd cypress-image-snapshot/examples
+git clone https://github.com/best-testing-monkey/cypress-geometry-snapshot.git
+cd cypress-geometry-snapshot/examples
 npm install
 npm run examples
 ```
