@@ -38,6 +38,15 @@ const failOnSnapshotDiff =
   Cypress.env('failOnSnapshotDiff');
 const snapshotsDir = `${screenshotsFolder}/../snapshots`;
 
+/**
+ * Derive a readable, valid xpath expression.
+ *
+ * Limitation: elements in an iframe are identified by the xpath valid within that iframe.
+ *
+ * @param {(() => (Node | null))|ActiveX.IXMLDOMNode|(Node & ParentNode)|ChildNode} node
+ *
+ * @returns {string}
+ */
 function getXPath(node) {
   if (node === document.body) {
     return `//${node.tagName}`;
@@ -79,11 +88,25 @@ function getXPath(node) {
   return new_path;
 }
 
+/**
+ * Save an object serialized as JSON
+ *
+ * @param {string} shotFN
+ * @param {Object} geoMap
+ */
 function saveAsJson(shotFN, geoMap) {
   cy.log(`Save ${shotFN}`);
   cy.writeFile(shotFN, JSON.stringify(geoMap, null, 2));
 }
 
+/**
+ * return ${subjectArray} without all elements regex matching any in ${regexList}
+ *
+ * @param {string[]} subjectArray
+ * @param {string[]} regexList
+ *
+ * @returns {string[]}
+ */
 function filterOutRegex(subjectArray, regexList) {
   console.log('filterOutRegex:');
   if (regexList.length === 0) {
@@ -105,6 +128,15 @@ function filterOutRegex(subjectArray, regexList) {
   //     console.log(`"${x}".match("${rx}") === null`)
   //     return x.match(rx) === null; })})
 }
+
+/**
+ * return ${subjectArray} with all elements regex matching any in ${regexList}
+ *
+ * @param {string[]} subjectArray
+ * @param {string[]} regexList
+ *
+ * @returns {string[]}
+ */
 function filterInRegex(subjectArray, regexList) {
   console.log('filterInRegex');
   if (regexList.length === 0) {
@@ -126,21 +158,38 @@ function filterInRegex(subjectArray, regexList) {
   //     return x.match(rx) !== null; })})
 }
 
-function diffKeys(oldKeys, newKeys, ignoredXpaths) {
+/**
+ * Diff the keys of two objects
+ *
+ * @param {string[]} oldObject
+ * @param {string[]} newObject
+ * @param {string[]} ignoredKeys
+ *
+ * @returns {{common: string[], removed: string[], added: string[]}} Object with the keys of both objects divided between common (no change), removed (keys in oldObject not in the keys of newObject) and added (keys of newObject not found in oldObject)
+ */
+function diffArrays(oldObject, newObject, ignoredKeys) {
   let retvals = {
-    common: oldKeys.filter(x => newKeys.includes(x)),
-    removed: oldKeys.filter(x => !newKeys.includes(x)),
-    added: newKeys.filter(x => !oldKeys.includes(x)),
+    common: oldObject.filter(x => newObject.includes(x)),
+    removed: oldObject.filter(x => !newObject.includes(x)),
+    added: newObject.filter(x => !oldObject.includes(x)),
   };
   for (let key of Object.keys(retvals)) {
-    let ignored = filterInRegex(retvals[key], ignoredXpaths);
-    retvals[key] = filterOutRegex(retvals[key], ignoredXpaths);
+    let ignored = filterInRegex(retvals[key], ignoredKeys);
+    retvals[key] = filterOutRegex(retvals[key], ignoredKeys);
     console.log('Ignored @' + key);
     console.log(JSON.stringify(ignored, null, 2));
   }
   return retvals;
 }
 
+/**
+ * remove the last occurance of ${removeString} from ${subjectStr}
+ *
+ * @param {string} removeString
+ * @param {string} subjectStr
+ *
+ * @returns {string}
+ */
 function removeLastInstance(removeString, subjectStr) {
   const subStringIndex = subjectStr.lastIndexOf(removeString);
   if (subStringIndex < 0) return subjectStr;
@@ -149,19 +198,24 @@ function removeLastInstance(removeString, subjectStr) {
   return partOne + partTwo;
 }
 
+/**
+ * Checks and reports elements that are newly displayed, compared to the saved keys
+ *
+ * @param {{common: string[], removed: string[], added: string[]}} keysDiff
+ *
+ * @returns {string} a string with a report of the new elements
+ */
 function checkForNewElements(keysDiff) {
-  let shouldFail = false;
-  let newElements = 0;
   let failLines = '';
   if (keysDiff.added.length > 0) {
-    shouldFail = true;
     for (const key of keysDiff.added) {
       failLines += `New element: ${key}\n`;
       cy.log(`New element: ${key}`);
-      newElements++;
     }
   }
-  if (newElements > 0) {
+
+  if (failLines.length > 0) {
+    let newElements = failLines.split('\n').length;
     cy.log(`${newElements} new elements found`);
     failLines = `${newElements} new elements found:\n  - ${failLines.replaceAll(
       '\n',
@@ -172,6 +226,13 @@ function checkForNewElements(keysDiff) {
   return failLines;
 }
 
+/**
+ * Checks and reports elements that are no longer displayed, compared to the saved keys
+ *
+ * @param {{common: string[], removed: string[], added: string[]}} keysDiff
+ *
+ * @returns {string} a string with a report of the removed elements
+ */
 function checkForMissingElements(keysDiff) {
   let missingElements = 0;
   let failLines = '';
@@ -182,6 +243,7 @@ function checkForMissingElements(keysDiff) {
       missingElements++;
     }
   }
+
   if (missingElements > 0) {
     failLines = `${missingElements} missing elements:\n  - ${failLines.replaceAll(
       '\n',
@@ -192,32 +254,40 @@ function checkForMissingElements(keysDiff) {
   return failLines;
 }
 
-function checkBounds(
-  keysDiff,
-  geoMapExisting,
-  geoMap,
-  shouldFail,
-  maxPixelDiff
-) {
+/**
+ * Compare the bounds in ${boundsMapOld} and ${boundsMapNew}, returning a string report of bounds differing >= ${maxPixelDiff}
+ *
+ * @param {{common: string[], removed: string[], added: string[]}} keysDiff
+ * @param {number} maxPixelDiff max pixels a bound may differ on any value
+ * @param {Object.<string, {x: number, y: number, width: number, height: number, top: number, right: number, bottom: number, left: number}>} boundsMapNew
+ * @param {Object.<string, {x: number, y: number, width: number, height: number, top: number, right: number, bottom: number, left: number}>} boundsMapOld
+ *
+ * @returns string a string report of bounds differing >= ${maxPixelDiff}
+ */
+function checkBounds(keysDiff, boundsMapOld, boundsMapNew, maxPixelDiff) {
   if (typeof maxPixelDiff === 'undefined') {
     maxPixelDiff = 0;
   }
   let failLines = '';
 
   for (const key of keysDiff.common) {
-    const oldBounds = geoMapExisting[key];
-    const newBounds = geoMap[key];
+    const oldBounds = boundsMapOld[key];
+    const newBounds = boundsMapNew[key];
     let boundsDiffer = false;
     let differKeys = '';
+    let differBounds = { old: {}, new: {} };
     for (const boundsKey of Object.keys(oldBounds)) {
       if (
         Math.abs(oldBounds[boundsKey] - newBounds[boundsKey]) > maxPixelDiff
       ) {
         boundsDiffer = true;
-        shouldFail = true;
         differKeys += ' ' + boundsKey;
+
+        differBounds.old[boundsKey] = oldBounds[boundsKey];
+        differBounds.new[boundsKey] = newBounds[boundsKey];
       }
     }
+
     if (boundsDiffer) {
       differKeys = differKeys.trim();
       differKeys = differKeys.replaceAll(' ', ', ');
@@ -234,29 +304,39 @@ function checkBounds(
   return failLines;
 }
 
+/**
+ * Compare ${boundsMapOld} and ${boundsMapNew}
+ *
+ * @param {number} maxPixelDiff max pixels a bound may differ on any value
+ * @param {Object.<string, {x: number, y: number, width: number, height: number, top: number, right: number, bottom: number, left: number}>} boundsMapNew
+ * @param {string[]} ignoredXpaths
+ * @param {Object.<string, {x: number, y: number, width: number, height: number, top: number, right: number, bottom: number, left: number}>} boundsMapOld
+ *
+ * @returns string a string report
+ */
 function compareSavedAndCurrentBounds(
-  geoMapExisting,
-  geoMap,
+  boundsMapOld,
+  boundsMapNew,
   ignoredXpaths,
   maxPixelDiff
 ) {
   let shouldFail = false;
   let failLines = '';
-  const keysDiff = diffKeys(
-    Object.keys(geoMapExisting),
-    Object.keys(geoMap),
+  const keysDiff = diffArrays(
+    Object.keys(boundsMapOld),
+    Object.keys(boundsMapNew),
     ignoredXpaths
   );
-  // new element
-  failLines += checkForNewElements(keysDiff);
+
+  setupCanvas();
+
+  failLines += checkForNewElements(keysDiff, boundsMapNew);
   //todo: highlight new elements
 
-  // missing element
-  failLines += checkForMissingElements(keysDiff);
+  failLines += checkForMissingElements(keysDiff, boundsMapOld);
   //todo: mark locations of missing elements
 
-  // Bounds
-  failLines += checkBounds(keysDiff, geoMapExisting, geoMap, maxPixelDiff);
+  failLines += checkBounds(keysDiff, boundsMapOld, boundsMapNew, maxPixelDiff);
   //todo: mark moved elements
   //todo: mark locations of old location
 
@@ -264,25 +344,34 @@ function compareSavedAndCurrentBounds(
   return failLines;
 }
 
+function getValidOptions(defaultOptions, maybeName, commandOptions) {
+  const options = _extends(
+    {},
+    defaultOptions,
+    (typeof maybeName === 'string' ? commandOptions : maybeName) || {}
+  );
+  let ignoredXpaths = options['ignore'];
+  if (typeof ignoredXpaths === 'undefined') {
+    ignoredXpaths = [];
+  }
+
+  let maxPixelDiff = options['maxdiff'];
+  if (typeof maxPixelDiff === 'undefined') {
+    maxPixelDiff = 0;
+  }
+  return { ignoredXpaths, maxPixelDiff };
+}
+
+/**
+ * @param {*|string} defaultOptions
+ */
 function MatchGeometrySnapshotCommand(defaultOptions) {
   return function MatchGeometrySnapshot(subject, maybeName, commandOptions) {
-    const options = _extends(
-      {},
+    let { ignoredXpaths, maxPixelDiff } = getValidOptions(
       defaultOptions,
-      (typeof maybeName === 'string' ? commandOptions : maybeName) || {}
+      maybeName,
+      commandOptions
     );
-    let ignoredXpaths = options['ignore'];
-    if (typeof ignoredXpaths === 'undefined') {
-      ignoredXpaths = [];
-    }
-
-    let maxPixelDiff = options['maxdiff'];
-    if (typeof maxPixelDiff === 'undefined') {
-      maxPixelDiff = 0;
-    }
-
-    //todo: add option diffStyle (record and diff the calculated styles as well)
-    //todo: add option diffHoverStyle (record and diff the calculated styles as well)
 
     const name =
       typeof maybeName === 'string' ? maybeName : Cypress.currentTest.title;
@@ -305,21 +394,22 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
         cy.wrap(allBounds).as('geometryMap');
       }
     });
-    cy.get('@geometryMap').then(geoMap => {
+
+    cy.get('@geometryMap').then(boundsMapNew => {
       const shotFN = `${screenshotsFolder}/${name}.json`;
-      saveAsJson(shotFN, geoMap);
+      saveAsJson(shotFN, boundsMapNew);
 
       const snapFN = `${snapshotsDir}/${Cypress.spec.name}/${name}.json`;
 
       cy.log(`Looking for ${snapFN}`);
       cy.task('fileExists', { path: snapFN }).then(itExists => {
-        if (itExists || !updateSnapshots) {
+        if (itExists || updateSnapshots) {
           cy.log('Existing version found in snapshots');
-          cy.task('loadAsJson', { path: snapFN }).then(geoMapExisting => {
+          cy.task('loadAsJson', { path: snapFN }).then(boundsMapOld => {
             cy.log('Compare current and saved bounds');
             const shouldFail = compareSavedAndCurrentBounds(
-              geoMapExisting,
-              geoMap,
+              boundsMapOld,
+              boundsMapNew,
               ignoredXpaths,
               maxPixelDiff
             );
@@ -337,7 +427,7 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
             }
           });
         } else {
-          saveAsJson(snapFN, geoMap);
+          saveAsJson(snapFN, boundsMapNew);
         }
       });
     });
@@ -358,5 +448,8 @@ function addMatchGeometrySnapshotCommand(
     },
     MatchGeometrySnapshotCommand(options)
   );
-  //todo: add command to crawl the current page
 }
+
+//todo: add option diffStyle (record and diff the calculated styles as well)
+//todo: add option diffHoverStyle (record and diff the calculated styles as well)
+//todo: add command to crawl the current page
