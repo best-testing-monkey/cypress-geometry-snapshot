@@ -1,5 +1,3 @@
-/* eslint-disable no-restricted-syntax */
-
 Object.defineProperty(exports, '__esModule', {
   value: true,
 });
@@ -35,15 +33,14 @@ const fs = require('fs-extra');
 
 const screenshotsFolder = Cypress.config('screenshotsFolder');
 const updateSnapshots = Cypress.env('updateSnapshots') || false;
-//todo: implement updateSnapshots
 const failOnSnapshotDiff =
-  typeof Cypress.env('failOnSnapshotDiff') === 'undefined';
-//todo: implement failOnSnapshotDiff
+  typeof Cypress.env('failOnSnapshotDiff') === 'undefined' ||
+  Cypress.env('failOnSnapshotDiff');
 const snapshotsDir = `${screenshotsFolder}/../snapshots`;
 
 function getXPath(node) {
   if (node === document.body) {
-    return `//${element.tagName}`;
+    return `//${node.tagName}`;
   }
   if (typeof node.hasAttribute === 'undefined') {
     return '/';
@@ -145,11 +142,11 @@ function diffKeys(oldKeys, newKeys, ignoredXpaths) {
 }
 
 function removeLastInstance(removeString, subjectStr) {
-  const charpos = subjectStr.lastIndexOf(removeString);
-  if (charpos < 0) return subjectStr;
-  let ptone = subjectStr.substring(0, charpos);
-  let pttwo = subjectStr.substring(charpos + removeString.length);
-  return ptone + pttwo;
+  const subStringIndex = subjectStr.lastIndexOf(removeString);
+  if (subStringIndex < 0) return subjectStr;
+  let partOne = subjectStr.substring(0, subStringIndex);
+  let partTwo = subjectStr.substring(subStringIndex + removeString.length);
+  return partOne + partTwo;
 }
 
 function checkForNewElements(keysDiff) {
@@ -211,20 +208,20 @@ function checkBounds(
     const oldBounds = geoMapExisting[key];
     const newBounds = geoMap[key];
     let boundsDiffer = false;
-    let differkeys = '';
+    let differKeys = '';
     for (const boundsKey of Object.keys(oldBounds)) {
       if (
         Math.abs(oldBounds[boundsKey] - newBounds[boundsKey]) > maxPixelDiff
       ) {
         boundsDiffer = true;
         shouldFail = true;
-        differkeys += ' ' + boundsKey;
+        differKeys += ' ' + boundsKey;
       }
     }
     if (boundsDiffer) {
-      differkeys = differkeys.trim();
-      differkeys = differkeys.replaceAll(' ', ', ');
-      failLines += `- ${differkeys}:\n    ${JSON.stringify(
+      differKeys = differKeys.trim();
+      differKeys = differKeys.replaceAll(' ', ', ');
+      failLines += `- ${differKeys}:\n    ${JSON.stringify(
         { path: key, saved: oldBounds, observed: newBounds },
         null,
         2
@@ -316,7 +313,7 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
 
       cy.log(`Looking for ${snapFN}`);
       cy.task('fileExists', { path: snapFN }).then(itExists => {
-        if (itExists) {
+        if (itExists || !updateSnapshots) {
           cy.log('Existing version found in snapshots');
           cy.task('loadAsJson', { path: snapFN }).then(geoMapExisting => {
             cy.log('Compare current and saved bounds');
@@ -327,7 +324,14 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
               maxPixelDiff
             );
             if (shouldFail) {
-              throw 'Differences were found\n' + shouldFail;
+              if (failOnSnapshotDiff) {
+                throw 'Differences were found\n' + shouldFail;
+              }
+              {
+                cy.log(
+                  `Differences were found\n${shouldFail}\n(fail suppressed)`
+                );
+              }
             } else {
               cy.log('No differences found');
             }

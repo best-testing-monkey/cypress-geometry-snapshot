@@ -2,9 +2,9 @@
 
 The goal of this Cypress plugin is 'visually' testing using the geometry of a web-page, using computed properties of all visible elements:
 
-* Bounding boxes
-* computed style
-* text
+- Bounding boxes
+- computed style
+- text
 
 Testing by geometry instead of a graphical pixel-by-pixel diff is generally much faster (for larger pages), pulling crawling complete sites for visible changes within feasability.
 
@@ -102,13 +102,9 @@ describe('Login', () => {
 
 Run Cypress with `--env updateSnapshots=true` in order to update the base image files for all of your tests.
 
-`TODO!! This feature is not implemented yet!`
-
 ### Preventing failures
 
 Run Cypress with `--env failOnSnapshotDiff=false` in order to prevent test failures when an image diff does not pass.
-
-`TODO!! This feature is not implemented yet!`
 
 ### Reporter
 
