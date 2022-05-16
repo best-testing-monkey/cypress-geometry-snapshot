@@ -199,13 +199,27 @@ function removeLastInstance(removeString, subjectStr) {
 }
 
 /**
+ * @param {string[]} allBounds
+ * @param {Object<string, {x: number, y: number, width: number, height: number, top: number, right: number, bottom: number, left: number}>} boundsMapNew
+ * @param {string} strokeStyle
+ */
+function highlightBounds(allBounds, boundsMapNew, strokeStyle) {
+  for (const key of allBounds) {
+    let bounds = boundsMapNew[key];
+    drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, strokeStyle);
+  }
+}
+
+/**
  * Checks and reports elements that are newly displayed, compared to the saved keys
  *
  * @param {{common: string[], removed: string[], added: string[]}} keysDiff
  *
+ * @param {boolean} highLight
+ * @param {Object.<string, {x: number, y: number, width: number, height: number, top: number, right: number, bottom: number, left: number}>} boundsMapNew
  * @returns {string} a string with a report of the new elements
  */
-function checkForNewElements(keysDiff) {
+function checkForNewElements(keysDiff, highLight = undefined, boundsMapNew) {
   let failLines = '';
   if (keysDiff.added.length > 0) {
     for (const key of keysDiff.added) {
@@ -213,6 +227,8 @@ function checkForNewElements(keysDiff) {
       cy.log(`New element: ${key}`);
     }
   }
+
+  if (highLight) highlightBounds(keysDiff.added, boundsMapNew, 'green');
 
   if (failLines.length > 0) {
     let newElements = failLines.split('\n').length;
@@ -233,7 +249,11 @@ function checkForNewElements(keysDiff) {
  *
  * @returns {string} a string with a report of the removed elements
  */
-function checkForMissingElements(keysDiff) {
+function checkForMissingElements(
+  keysDiff,
+  highLight = false,
+  boundsMapOld = undefined
+) {
   let missingElements = 0;
   let failLines = '';
 
@@ -243,6 +263,8 @@ function checkForMissingElements(keysDiff) {
       missingElements++;
     }
   }
+
+  if (highLight) highlightBounds(keysDiff.removed, boundsMapOld, 'red');
 
   if (missingElements > 0) {
     failLines = `${missingElements} missing elements:\n  - ${failLines.replaceAll(
@@ -264,7 +286,13 @@ function checkForMissingElements(keysDiff) {
  *
  * @returns string a string report of bounds differing >= ${maxPixelDiff}
  */
-function checkBounds(keysDiff, boundsMapOld, boundsMapNew, maxPixelDiff) {
+function checkBounds(
+  keysDiff,
+  boundsMapOld,
+  boundsMapNew,
+  maxPixelDiff,
+  highLight
+) {
   if (typeof maxPixelDiff === 'undefined') {
     maxPixelDiff = 0;
   }
@@ -288,6 +316,11 @@ function checkBounds(keysDiff, boundsMapOld, boundsMapNew, maxPixelDiff) {
       }
     }
 
+    if (highLight) {
+      highlightBounds(differBounds.old, boundsMapNew, 'blue');
+      highlightBounds(differBounds.new, boundsMapNew, 'orange');
+    }
+
     if (boundsDiffer) {
       differKeys = differKeys.trim();
       differKeys = differKeys.replaceAll(' ', ', ');
@@ -304,6 +337,55 @@ function checkBounds(keysDiff, boundsMapOld, boundsMapNew, maxPixelDiff) {
   return failLines;
 }
 
+function setupCanvas() {
+  const canvas = document.createElement('canvas'); //Create a canvas element
+  document.drawingCanvas = canvas;
+
+  //Set canvas width/height
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  //Set canvas drawing area width/height
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  //Position canvas
+  canvas.style.position = 'absolute';
+  canvas.style.left = 0;
+  canvas.style.top = 0;
+  canvas.style.zIndex = 100000;
+  canvas.style.pointerEvents = 'none'; //Make sure you can click 'through' the canvas
+  document.body.appendChild(canvas); //Append canvas to body element
+}
+
+/**
+ * @param {number} x
+ * @param {number} y
+ * @param {number} width
+ * @param {number} height
+ * @param {string} strokeStyle
+ * @param {string} fillStyle
+ */
+function drawRectangle(
+  x,
+  y,
+  width,
+  height,
+  strokeStyle = 'red',
+  fillStyle = undefined
+) {
+  if (typeof document.drawingCanvas === 'undefined') {
+    setupCanvas();
+  }
+  //Position parameters used for drawing the rectangle
+  const context = document.drawingCanvas.getContext('2d');
+  //Draw rectangle
+  context.rect(x, y, width, height);
+  context.strokeStyle = 'red';
+  if (fillStyle) {
+    context.fillStyle = fillStyle;
+    context.fill();
+  }
+}
+
 /**
  * Compare ${boundsMapOld} and ${boundsMapNew}
  *
@@ -311,6 +393,7 @@ function checkBounds(keysDiff, boundsMapOld, boundsMapNew, maxPixelDiff) {
  * @param {Object.<string, {x: number, y: number, width: number, height: number, top: number, right: number, bottom: number, left: number}>} boundsMapNew
  * @param {string[]} ignoredXpaths
  * @param {Object.<string, {x: number, y: number, width: number, height: number, top: number, right: number, bottom: number, left: number}>} boundsMapOld
+ * @param {boolean} highLight
  *
  * @returns string a string report
  */
@@ -318,7 +401,8 @@ function compareSavedAndCurrentBounds(
   boundsMapOld,
   boundsMapNew,
   ignoredXpaths,
-  maxPixelDiff
+  maxPixelDiff,
+  highLight
 ) {
   let shouldFail = false;
   let failLines = '';
@@ -330,13 +414,19 @@ function compareSavedAndCurrentBounds(
 
   setupCanvas();
 
-  failLines += checkForNewElements(keysDiff, boundsMapNew);
+  failLines += checkForNewElements(keysDiff, highLight, boundsMapNew);
   //todo: highlight new elements
 
-  failLines += checkForMissingElements(keysDiff, boundsMapOld);
+  failLines += checkForMissingElements(keysDiff, highLight, boundsMapOld);
   //todo: mark locations of missing elements
 
-  failLines += checkBounds(keysDiff, boundsMapOld, boundsMapNew, maxPixelDiff);
+  failLines += checkBounds(
+    keysDiff,
+    boundsMapOld,
+    boundsMapNew,
+    maxPixelDiff,
+    highLight
+  );
   //todo: mark moved elements
   //todo: mark locations of old location
 
@@ -359,7 +449,8 @@ function getValidOptions(defaultOptions, maybeName, commandOptions) {
   if (typeof maxPixelDiff === 'undefined') {
     maxPixelDiff = 0;
   }
-  return { ignoredXpaths, maxPixelDiff };
+  let highLight = options['highlight'];
+  return { ignoredXpaths, maxPixelDiff, highLight };
 }
 
 /**
@@ -367,7 +458,7 @@ function getValidOptions(defaultOptions, maybeName, commandOptions) {
  */
 function MatchGeometrySnapshotCommand(defaultOptions) {
   return function MatchGeometrySnapshot(subject, maybeName, commandOptions) {
-    let { ignoredXpaths, maxPixelDiff } = getValidOptions(
+    let { ignoredXpaths, maxPixelDiff, highLight } = getValidOptions(
       defaultOptions,
       maybeName,
       commandOptions
@@ -411,7 +502,8 @@ function MatchGeometrySnapshotCommand(defaultOptions) {
               boundsMapOld,
               boundsMapNew,
               ignoredXpaths,
-              maxPixelDiff
+              maxPixelDiff,
+              highLight
             );
             if (shouldFail) {
               if (failOnSnapshotDiff) {
