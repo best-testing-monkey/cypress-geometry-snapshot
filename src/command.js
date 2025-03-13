@@ -16,7 +16,7 @@ const _extends =
     return target;
   };
 /**
- * Copyright (c) 2018-present The Palmer Group
+ * Copyright (c) 2022-present best-testing-monkey (Tim Jansen)
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
