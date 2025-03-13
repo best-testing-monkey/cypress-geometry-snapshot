@@ -6,7 +6,7 @@
     "concurrently": "^3.6.0",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
-    "react-scripts": "1.1.4"
+    "react-scripts": "^1.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -21,11 +21,10 @@
     "cypress:open:dev": "ENV=dev npm run cypress:open",
     "cypress:open:qa": "ENV=qa npm run cypress:open",
     "cypress:open:staging": "ENV=staging npm run cypress:open",
-    "cypress:open:production": "ENV=production npm run cypress:open",
-    "cypress:open": "cypress open"
+    "cypress:open:production": "ENV=production npm run cypress:open"
   },
   "devDependencies": {
-    "cypress": "*",
+    "cypress": "^9.7.0",
     "cypress-geometry-snapshot": "github:best-testing-monkey/cypress-geometry-snapshot"
   }
 }

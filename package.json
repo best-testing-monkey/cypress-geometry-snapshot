@@ -1,6 +1,6 @@
 {
   "name": "cypress-geometry-snapshot",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "Cypress bindings for jest-image-snapshot.",
   "repository": "https://github.com/best-testing-monkey/cypress-geometry-snapshot",
   "author": "Tim Jansen <best-test-ng-monkey@gmail.com>",

@@ -5,10 +5,16 @@ describe('App', () => {
     cy.MatchGeometrySnapshot();
   });
 
+  it('should render on desktop fails', () => {
+    cy.visit('http://demoqa.com');
+
+    cy.MatchGeometrySnapshot();
+  });
+
   it('should render on mobile', () => {
     cy.visit('http://demoqa.com');
 
     cy.viewport(375, 812);
-    cy.MatchGeometrySnapshot('mobile/app', { ignore: ['.*fixedban.*'] });
+    cy.MatchGeometrySnapshot('mobile/app');
   });
 });
